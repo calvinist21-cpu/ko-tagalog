@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a3d62">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="한↔따갈로그">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>한국어 ↔ 따갈로그 번역</title>
+<style>
+  :root{
+    --bg1:#0a3d62; --bg2:#1e6091; --accent:#fdcb6e; --accent2:#e84118;
+    --card:rgba(255,255,255,.97); --ink:#14202b; --sub:#5b6b7a; --line:#e3e9ef; --ok:#0a7d4d;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html{height:100%}
+  body{
+    font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",Roboto,sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed;
+    color:var(--ink);min-height:100dvh;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    display:flex;flex-direction:column;align-items:center;overscroll-behavior-y:none;
+  }
+  .wrap{width:100%;max-width:560px;padding:14px 13px 30px;flex:1;display:flex;flex-direction:column;gap:12px}
+  header{text-align:center;color:#fff;padding:6px 0 0}
+  header h1{font-size:18px;font-weight:800;letter-spacing:-.3px;display:flex;gap:7px;justify-content:center;align-items:center}
+  header p{font-size:12px;opacity:.85;margin-top:2px}
+  .flag{font-size:17px}
+
+  .dir{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--card);
+    border-radius:15px;padding:10px;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+  .lang{flex:1;text-align:center;font-weight:800;font-size:15px;color:var(--ink);padding:8px;border-radius:10px;background:#f3f6fa}
+  .swap{width:44px;height:44px;border:none;border-radius:50%;background:var(--bg2);color:#fff;font-size:19px;
+    cursor:pointer;flex:none;transition:transform .25s;display:flex;align-items:center;justify-content:center}
+  .swap:active{transform:rotate(180deg) scale(.9)}
+
+  .card{background:var(--card);border-radius:15px;padding:13px;box-shadow:0 8px 22px rgba(0,0,0,.14)}
+  .lbl{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .lbl .r{display:flex;align-items:center;gap:8px}
+  /* 16px+ : iOS 자동 확대 방지 */
+  /* 한국어 입력창 — 작게 */
+  textarea{width:100%;border:none;outline:none;resize:none;font-size:14px;line-height:1.45;color:#5b6b7a;
+    background:transparent;min-height:50px;max-height:22vh;font-family:inherit}
+  .count{font-weight:600;color:#9aa7b3;font-size:11px}
+
+  .rt{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--bg2);cursor:pointer;user-select:none}
+  .sw2{width:34px;height:19px;border-radius:11px;background:#cfd8e0;position:relative;transition:.2s;flex:none}
+  .sw2.on{background:var(--ok)}
+  .sw2 i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:.2s}
+  .sw2.on i{left:17px}
+
+  .actions{display:flex;gap:8px;margin-top:6px}
+  .btn{flex:1;border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn-go{background:linear-gradient(135deg,var(--accent2),#c23616);color:#fff;box-shadow:0 6px 16px rgba(232,65,24,.32)}
+  .btn-go:active{transform:translateY(1px)}
+  .ic{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:11px;font-size:17px;cursor:pointer;flex:none}
+  .ic:active{background:#eef3f8}
+  .mini{display:flex;gap:6px}
+  /* 음성 버튼(양방향) */
+  .mics{display:flex;gap:10px}
+  .micbtn{flex:1;border:none;border-radius:16px;color:#fff;cursor:pointer;padding:15px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:1px;font-family:inherit;transition:transform .1s}
+  .micbtn .mi{font-size:23px;line-height:1}
+  .micbtn .ml{font-size:16px;font-weight:800;margin-top:3px}
+  .micbtn .ms{font-size:11px;opacity:.92;font-weight:600}
+  .micbtn.ko{background:linear-gradient(135deg,#0a7d4d,#0c9e72);box-shadow:0 8px 18px rgba(10,125,77,.34)}
+  .micbtn.tl{background:linear-gradient(135deg,#1e6091,#2a8fd0);box-shadow:0 8px 18px rgba(30,96,145,.34)}
+  .micbtn:active{transform:translateY(1px)}
+  .micbtn.rec{background:linear-gradient(135deg,#e84118,#c0392b)!important;animation:recpulse 1s infinite}
+  @keyframes recpulse{0%{box-shadow:0 0 0 0 rgba(232,65,24,.55)}70%{box-shadow:0 0 0 12px rgba(232,65,24,0)}100%{box-shadow:0 0 0 0 rgba(232,65,24,0)}}
+  .vhint{font-size:11px;color:var(--sub);margin-top:8px;text-align:center;background:#f3f6fa;border-radius:8px;padding:7px}
+
+  /* 결과 히어로 카드 */
+  .hero{border-top:6px solid #fdcb6e;padding:18px 16px 16px}
+  .badge{background:#eaf2f8;color:#1f3a5f;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800}
+  .result{min-height:230px;font-size:44px;font-weight:800;line-height:1.25;color:#0a3d62;white-space:pre-wrap;word-break:break-word;transition:opacity .12s;letter-spacing:-.5px;display:flex;align-items:center;padding:6px 0}
+  .result.empty{color:#b3bdc6;font-size:16px;font-weight:500;min-height:150px}
+  .copybtn{width:100%;margin-top:12px;border:none;border-radius:12px;padding:12px;background:#f0f4f8;color:#1f3a5f;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+  .copybtn:active{background:#e2eaf2}
+  .sub{background:rgba(255,255,255,.9)}
+  .clearbtn{color:#1e6091;cursor:pointer;font-weight:700}
+  .result.loading{opacity:.45}
+  .engine{font-size:10.5px;color:#9aa7b3;font-weight:600;display:flex;align-items:center;gap:5px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(10,125,77,.5);animation:pulse 1s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(10,125,77,.5)}70%{box-shadow:0 0 0 6px rgba(10,125,77,0)}100%{box-shadow:0 0 0 0 rgba(10,125,77,0)}}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.28);
+    border-radius:20px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .chip:active{background:rgba(255,255,255,.3)}
+  .sec-t{color:#fff;font-size:12px;font-weight:700;opacity:.9;margin:2px 2px -4px}
+  .hist{display:flex;flex-direction:column;gap:8px}
+  .hitem{background:var(--card);border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+  .hitem b{color:var(--bg2)} .hitem span{color:var(--sub)}
+  .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#14202b;color:#fff;
+    padding:10px 18px;border-radius:24px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+  .toast.show{opacity:.95}
+  footer{color:#fff;opacity:.55;font-size:10.5px;text-align:center;margin-top:auto;padding-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="flag">🇰🇷</span> 한국어 ↔ 따갈로그 <span class="flag">🇵🇭</span></h1>
+    <p>실시간 번역 · <span id="net">🟢 온라인</span></p>
+  </header>
+
+  <div class="dir">
+    <div class="lang" id="srcLang">한국어</div>
+    <button class="swap" id="swap" title="방향 바꾸기">⇄</button>
+    <div class="lang" id="tgtLang">Tagalog</div>
+  </div>
+
+  <!-- 결과: 화면의 주인공 -->
+  <div class="card hero">
+    <div class="lbl"><span class="badge" id="outLbl">Tagalog 번역</span><span class="engine" id="engine"></span></div>
+    <div class="result empty" id="result">말하거나 입력하면 여기에 크게 번역됩니다.</div>
+    <button class="copybtn" id="copy">📋 복사하기</button>
+  </div>
+
+  <!-- 두 개의 음성 버튼: 양방향 통역 -->
+  <div class="mics">
+    <button class="micbtn ko" id="micKo"><span class="mi">🎤</span><span class="ml">한국어</span><span class="ms">→ 따갈로그</span></button>
+    <button class="micbtn tl" id="micTl"><span class="mi">🎤</span><span class="ml">Tagalog</span><span class="ms">→ 한국어</span></button>
+  </div>
+  <div class="vhint" id="vhint">버튼을 누르고 말하면 반대 언어로 바로 번역됩니다.</div>
+
+  <!-- 입력(작게): 직접 타이핑/인식 텍스트 -->
+  <div class="card sub">
+    <div class="lbl"><span id="inLbl">한국어 입력</span><span class="count"><span id="cnt">0</span>자 · <span id="clear" class="clearbtn">지우기</span></span></div>
+    <textarea id="input" placeholder="여기에 입력해도 됩니다…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"></textarea>
+  </div>
+
+  <footer>키 없이 동작 · 오프라인 회화집 내장 · 데이터는 기기에만 저장 · v16</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let dir={src:'ko',tgt:'tl'};
+let realtime=true;
+const NAME={ko:'한국어',tl:'Tagalog'};
+const VOICE={ko:'ko-KR',tl:'fil-PH'};
+const cache=new Map();           // 같은 문장 재번역 방지(즉시 표시) + 오프라인 영구 캐시
+
+// ── 오프라인 회화집(온라인 검증 생성, 사역·생활 필수) + 핵심 교정 ──
+const PHRASEBOOK = {"안녕하세요":"hello","안녕히 가세요":"paalam","감사합니다":"salamat po","정말 감사합니다":"salamat po","죄송합니다":"sorry","괜찮아요":"okay ka lang ba","네":"oo","아니요":"hindi","천만에요":"payag ka","실례합니다":"excuse me","반갑습니다":"Ikinagagalak kitang makilala","좋은 아침입니다":"magandang umaga","안녕히 주무세요":"magandang gabi","잘 지내세요?":"kamusta ka na?","이름이 무엇입니까?":"ano pangalan mo","어디에서 오셨어요?":"taga saan ka?","만나서 반갑습니다":"Ikinagagalak kitang makilala","다시 만나요":"Magkita ulit tayo","사랑합니다":"mahal kita","용서해 주세요":"Patawarin mo sana ako","예수님이 당신을 사랑하십니다":"Mahal Ka ni Hesus","하나님은 당신을 사랑하십니다":"Mahal ka ng Diyos","함께 기도합시다":"Sama-sama tayong manalangin","예배에 오신 것을 환영합니다":"maligayang pagdating sa pagsamba","하나님의 은혜와 평강이 함께하시기를":"Sumainyo nawa ang biyaya at kapayapaan ng Diyos","할렐루야":"hallelujah","아멘":"amen","성경":"Bibliya","기도":"manalangin","예배":"pagsamba","교회":"simbahan","목사님":"rev","찬양합시다":"Purihin natin","축복합니다":"Pagpalain ka","하나님이 함께하시기를":"Sumainyo nawa ang Diyos","예수님을 믿으세요":"maniwala kay jesus","구원":"kaligtasan","천국":"langit","회개하세요":"magsisi","평안하세요":"Magpahinga sa kapayapaan","물 좀 주세요":"bigyan mo ako ng tubig","배고파요":"nagugutom ako","목말라요":"nauuhaw ako","화장실이 어디예요?":"Nasaan ang banyo?","도와주세요":"tulong","얼마예요?":"magkano ito?","비싸요":"mahal kasi","싸요":"mura lang","이것 주세요":"pakibigay sa akin ito","잠깐만요":"Sandali lang","천천히 말해 주세요":"pakiusap ng dahan-dahan","다시 말해 주세요":"pakisabi ulit","이해했어요":"naintindihan ko","이해 못했어요":"hindi ko naintindihan","모르겠어요":"hindi ko alam","알겠어요":"sige","어디예요?":"nasaan ka","언제예요?":"kailan ito?","누구세요?":"sino ka ba","왜요?":"bakit naman","좋아요":"mahusay","싫어요":"hindi, ayoko","맛있어요":"ito ay masarap","아파요":"Masakit","병원이 어디예요?":"Saan ang ospital?","경찰을 불러 주세요":"mangyaring tumawag sa pulis","도와 주실 수 있나요?":"Maaari mo ba akong tulungan?","길을 잃었어요":"naliligaw ako","조심하세요":"ingat ka","기다려 주세요":"hintayin mo ako","하나":"isa","둘":"dalawa","셋":"tatlo","넷":"apat","다섯":"lima","여섯":"anim","일곱":"pito","여덟":"walo","아홉":"siyam","열":"init","오늘":"ngayon","내일":"bukas","어제":"kahapon","지금":"ngayon","아침":"umaga","점심":"tanghalian","저녁":"hapunan","밤":"gabi","가족":"pamilya","아버지":"ama","어머니":"ina","아들":"anak","딸":"anak na babae","친구":"kaibigan","사랑":"pag-ibig","평화":"kapayapaan","희망":"pag-asa","믿음":"magtiwala","음식":"pagkain","집":"bahay","학교":"paaralan","시간":"oras","돈":"pera","하나님":"ama","예수님":"Hesus","성령":"Espiritu Santo","복음":"Ebanghelyo","은혜":"biyaya"};
+Object.assign(PHRASEBOOK,{"하나님":"Diyos","안녕하세요":"Kumusta po","열":"sampu","천만에요":"walang anuman","목사님":"Pastor","괜찮아요":"ayos lang po","믿음":"pananampalataya","기도":"panalangin","죄송합니다":"pasensya na po","실례합니다":"mawalang-galang po","예수님을 믿으세요":"Manampalataya kay Hesus","좋아요":"mabuti"});
+function norm(s){return (s||'').trim().replace(/\s+/g,' ').replace(/[.!?。·]+$/,'').toLowerCase();}
+const PB_KO={}, PB_TL={};
+for(const k in PHRASEBOOK){const tl=PHRASEBOOK[k];PB_KO[norm(k)]=tl;if(!PB_TL[norm(tl)])PB_TL[norm(tl)]=k;}
+function loadCache(){try{const o=JSON.parse(localStorage.getItem('kotl_cache')||'{}');for(const k in o)cache.set(k,o[k]);}catch(e){}}
+function persistCache(){try{const o={};let n=0;for(const e of cache){o[e[0]]=e[1];if(++n>=600)break;}localStorage.setItem('kotl_cache',JSON.stringify(o));}catch(e){}}
+loadCache();
+function offlineServe(text,nkey){
+  let hit=null,src='';
+  if(cache.has(nkey)){hit=cache.get(nkey);src='저장됨';}
+  else{const n=norm(text);
+    if(dir.src==='ko'&&dir.tgt==='tl'&&PB_KO[n]){hit=PB_KO[n];src='회화집';}
+    else if(dir.src==='tl'&&dir.tgt==='ko'&&PB_TL[n]){hit=PB_TL[n];src='회화집';}}
+  if(hit){$('result').classList.remove('empty','loading');$('result').textContent=hit;$('engine').textContent=src+' · 오프라인';lastReq=nkey;return true;}
+  return false;
+}
+function updateNet(){const e=document.getElementById('net');if(e)e.textContent=navigator.onLine?'🟢 온라인':'🔴 오프라인(회화집)';}
+window.addEventListener('online',updateNet);window.addEventListener('offline',updateNet);
+let ctrl=null, timer=null, lastReq='', pendingSpeak=false, recog=null, listening=false, manualStop=false, sttFinal='', micGranted=false;
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1500);}
+function syncLabels(){
+  $('srcLang').textContent=NAME[dir.src];$('tgtLang').textContent=NAME[dir.tgt];
+  $('inLbl').textContent=NAME[dir.src]+' 입력';$('outLbl').textContent=NAME[dir.tgt]+' 번역';
+  $('input').placeholder=dir.src==='ko'?'입력하면 바로 번역됩니다…':'I-type ang teksto…';
+}
+
+// ── 번역 엔진 (Google 우선, 실패 시 MyMemory) — abort 지원 ──
+async function engineTranslate(text,sl,tl,signal){
+  // ① Google (consumer 번역기 품질, 문장 단위 정교 파싱)
+  try{
+    const u='https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&dj=1&sl='+sl+'&tl='+tl+'&q='+encodeURIComponent(text);
+    const r=await fetch(u,{signal});
+    if(r.ok){
+      const d=await r.json();
+      let out='';
+      if(d&&d.sentences) out=d.sentences.map(s=>s.trans||'').join('');       // dj=1 정밀 포맷
+      else if(Array.isArray(d)&&d[0]) out=d[0].map(s=>s[0]).join('');         // 구 포맷 폴백
+      out=(out||'').trim();
+      if(out) return {text:out,engine:'Google'};
+    }
+  }catch(e){ if(e.name==='AbortError') throw e; }
+  // ② MyMemory 폴백
+  const u2='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair='+sl+'|'+tl;
+  const r=await fetch(u2,{signal});const d=await r.json();const out=d.responseData&&d.responseData.translatedText;
+  if(out) return {text:out.trim(),engine:'MyMemory'};
+  throw new Error('no result');
+}
+
+function setResult(txt,engine,opts={}){
+  const res=$('result');
+  res.classList.remove('empty','loading');
+  res.textContent=txt;
+  $('engine').textContent=engine||'';
+}
+
+// 핵심: 거의 실시간 — 디바운스 + 이전 요청 취소 + 캐시
+async function run(text, retry){
+  retry=retry||0;
+  const nkey=dir.src+'|'+dir.tgt+'|'+norm(text);
+  // 1) 캐시(영구) 즉시
+  if(cache.has(nkey)){ const c=cache.get(nkey); setResult(c, navigator.onLine?'저장됨':'저장됨 · 오프라인'); lastReq=nkey; if(pendingSpeak){pendingSpeak=false;speak(c,dir.tgt);} return; }
+  // 2) 오프라인 → 회화집/캐시
+  if(!navigator.onLine){
+    if(!offlineServe(text,nkey)){
+      $('result').classList.remove('empty','loading');
+      $('result').textContent='(오프라인) 저장된 회화집에 없는 문장입니다. 인터넷에 연결되면 번역됩니다.';
+      $('engine').textContent='🔴 오프라인'; lastReq=nkey;
+    }
+    return;
+  }
+  // 3) 온라인 번역
+  if(ctrl) ctrl.abort(); ctrl=new AbortController(); lastReq=nkey;
+  $('result').classList.remove('empty'); $('result').classList.add('loading');
+  $('engine').innerHTML='<span class="dot"></span>번역 중';
+  try{
+    const {text:out,engine}=await engineTranslate(text,dir.src,dir.tgt,ctrl.signal);
+    if(lastReq!==nkey) return;
+    cache.set(nkey,out); persistCache();          // 오프라인 재사용 위해 영구 저장
+    setResult(out,engine);
+    if(pendingSpeak){pendingSpeak=false;speak(out,dir.tgt);}
+  }catch(e){
+    if(e.name==='AbortError') return;
+    if(lastReq!==nkey) return;
+    if(offlineServe(text,nkey)) return;            // 온라인 실패 시 회화집/캐시로 구제
+    if(retry<2){
+      $('result').classList.remove('loading'); $('engine').textContent='재시도 중…';
+      setTimeout(()=>{ if(lastReq===nkey && $('input').value.trim()===text) run(text, retry+1); },800);
+    } else {
+      $('result').classList.remove('loading'); $('engine').textContent='번역 실패 — 잠시 후 다시 시도해 주세요';
+    }
+  }
+}
+
+function schedule(immediate){
+  const text=$('input').value.trim();
+  $('cnt').textContent=$('input').value.length;
+  clearTimeout(timer);
+  if(!text){ if(ctrl)ctrl.abort(); $('result').className='result empty'; $('result').textContent='번역 결과가 여기에 실시간으로 표시됩니다.'; $('engine').textContent=''; return; }
+  if(immediate){ run(text); return; }
+  if(!realtime) return;
+  timer=setTimeout(()=>run(text), 320);   // 입력 멈춤 후 320ms → 거의 실시간
+}
+
+$('input').addEventListener('input',()=>schedule(false));
+$('clear').onclick=()=>{sttFinal='';$('input').value='';schedule(false);$('input').focus();};
+$('swap').onclick=()=>{
+  const r=$('result');
+  dir={src:dir.tgt,tgt:dir.src};syncLabels();
+  if(!r.classList.contains('empty')){$('input').value=r.textContent;}
+  schedule(true);
+};
+
+// ── 발음 재생: 구글 TTS(실제 따갈로그/한국어 음성) 우선, 실패 시 내장 음성 ──
+const TTSLANG={ko:'ko',tl:'tl'};
+let audioEl=null;
+function stopSpeak(){try{speechSynthesis.cancel();}catch(e){} if(audioEl){try{audioEl.pause();}catch(e){} audioEl=null;}}
+function gttsUrl(t,l){return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl='+l+'&q='+encodeURIComponent(t);}
+function chunkText(t,n){const out=[];let s=(t||'').trim();while(s.length>n){let i=s.lastIndexOf(' ',n);if(i<40)i=n;out.push(s.slice(0,i));s=s.slice(i).trim();}if(s)out.push(s);return out;}
+function allVoices(){ try{return speechSynthesis?speechSynthesis.getVoices():[]}catch(e){return[]} }
+// 해당 언어의 '현지' 음성만 선택 (없으면 null). 뉴럴/Natural/Online 우선.
+function pickVoice(code){
+  const vs=allVoices(); if(!vs||!vs.length) return null;
+  const want = code==='ko' ? ['ko'] : ['fil','tl'];   // 따갈로그 = fil-PH / tl
+  const cand = vs.filter(v=>v.lang && want.some(w=>v.lang.toLowerCase().startsWith(w)));
+  if(!cand.length) return null;                        // 엉뚱한 언어로 읽지 않음
+  return cand.find(v=>/natural|neural|online/i.test(v.name||'')) || cand[0];
+}
+function ssSpeak(text,voice,code){
+  const u=new SpeechSynthesisUtterance(text);
+  u.voice=voice; u.lang=voice.lang||(code==='ko'?'ko-KR':'fil-PH'); u.rate=0.95;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function gttsSpeak(text,code){
+  const l=TTSLANG[code]||'en'; const parts=chunkText(text,190); let i=0;
+  const next=()=>{
+    if(i>=parts.length){audioEl=null;return;}
+    const a=new Audio(gttsUrl(parts[i],l)); audioEl=a; i++;
+    a.onended=next;
+    a.onerror=()=>{audioEl=null; toast('발음 재생 실패 — 인터넷 연결 확인');};
+    a.play().catch(()=>{audioEl=null; toast('발음을 들으려면 화면을 한 번 탭해 주세요');});
+  };
+  next();
+}
+function speak(text,code){
+  if(!text)return; stopSpeak();
+  const v=pickVoice(code);
+  if(v){ ssSpeak(text,v,code); return; }   // ① 현지 음성(예: Edge 필리핀 뉴럴) — 최고 품질
+  gttsSpeak(text,code);                      // ② 구글 네이티브 TTS (현지 발음)
+}
+// 음성 목록 미리 로드(첫 클릭에서 비지 않도록)
+try{ allVoices(); if(window.speechSynthesis) speechSynthesis.onvoiceschanged=allVoices; }catch(e){}
+$('copy').onclick=()=>{const r=$('result');if(r.classList.contains('empty'))return;if(navigator.clipboard){navigator.clipboard.writeText(r.textContent).then(()=>toast('복사됨'));}else toast('복사 미지원');};
+
+// ── 음성 입력(STT) → 즉시 번역 → 결과 음성 재생 ──
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function micEls(){ return [document.getElementById('micKo'),document.getElementById('micTl')]; }
+function clearRec(){ micEls().forEach(b=>b&&b.classList.remove('rec')); }
+// 양방향: 한국어 버튼=한국어→따갈로그, Tagalog 버튼=따갈로그→한국어
+async function onMic(src,tgt){
+  if(!SR){ toast('이 브라우저는 음성인식 미지원 — Chrome(안드로이드)·Safari(아이폰)'); return; }
+  if(listening){
+    manualStop=true; try{recog.stop();}catch(e){}
+    if(dir.src===src) return;                       // 같은 언어 버튼 → 종료
+    await new Promise(r=>setTimeout(r,300));          // 다른 언어 → 전환
+  }
+  const localhost=(location.hostname==='localhost'||location.hostname==='127.0.0.1');
+  if(!window.isSecureContext && !localhost){ toast('마이크는 보안연결(HTTPS) 또는 PC localhost에서만 됩니다'); return; }
+  dir={src:src,tgt:tgt}; syncLabels();
+  stopSpeak();
+  // 마이크 권한은 첫 1회만 요청 → 이후엔 재요청하지 않음(세션 종료 전까지)
+  if(!micGranted){
+    try{ if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){ const s=await navigator.mediaDevices.getUserMedia({audio:true}); s.getTracks().forEach(t=>t.stop()); } micGranted=true; }
+    catch(e){ toast('마이크 권한을 허용해 주세요 (주소창 자물쇠 → 마이크 허용)'); return; }
+  }
+  manualStop=false; sttFinal='';
+  startRecog();
+}
+function startRecog(){
+  recog=new SR();
+  recog.lang = dir.src==='ko'?'ko-KR':'fil-PH';
+  recog.interimResults=true; recog.continuous=true; recog.maxAlternatives=1;
+  recog.onstart=()=>{ listening=true; clearRec();
+    const b=document.getElementById(dir.src==='ko'?'micKo':'micTl'); if(b)b.classList.add('rec');
+    $('vhint').textContent='🔴 듣는 중… '+(dir.src==='ko'?'한국어로 계속 말씀하세요':'Magsalita sa Tagalog — 계속 말하세요')+' (같은 버튼 다시 누르면 종료)'; };
+  recog.onresult=e=>{
+    let final='',interim='';
+    for(let i=0;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) final+=t+' '; else interim+=t; }
+    const full=((sttFinal+' '+final+' '+interim).replace(/\s+/g,' ')).trim();
+    $('input').value=full; $('cnt').textContent=full.length; schedule(false);
+  };
+  recog.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){ manualStop=true; toast('마이크 권한 허용이 필요합니다'); }
+    else if(e.error==='audio-capture'){ manualStop=true; toast('마이크 장치를 찾을 수 없습니다'); }
+    else if(e.error==='network') toast('음성인식엔 인터넷 연결이 필요합니다');
+    // no-speech / aborted → onend에서 자동 재시작
+  };
+  recog.onend=()=>{
+    if(!manualStop){ sttFinal=$('input').value.trim(); setTimeout(()=>{ if(!manualStop) startRecog(); },200); return; }
+    listening=false; clearRec();
+    $('vhint').textContent='🎤 한국어 → 따갈로그 · 🎤 Tagalog → 한국어 (말하면 바로 번역)';
+    const t=$('input').value.trim(); if(t) schedule(true);
+  };
+  try{ recog.start(); }catch(e){}
+}
+document.getElementById('micKo').onclick=()=>onMic('ko','tl');
+document.getElementById('micTl').onclick=()=>onMic('tl','ko');
+
+syncLabels(); updateNet();
+if('serviceWorker'in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
